@@ -3,9 +3,9 @@ package testutil
 import (
 	"context"
 	"github.com/google/uuid"
-	"nebulaiq/internal/storage/postgres"
 	"net/url"
 	"os"
+	"table-for-you/backend/internal/storage/postgres"
 	"testing"
 )
 

@@ -4,7 +4,7 @@ services:
     runtime: go
     plan: free
     region: frankfurt
-    buildCommand: cd backend && go build -o bin/nebula ./cmd/nebula
+    buildCommand: cd backend && go build -o bin/nebula ./cmd/server
     startCommand: cd backend && ./bin/nebula migrate && ./bin/nebula serve
     healthCheckPath: /readyz
     envVars:

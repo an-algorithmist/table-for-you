@@ -2,22 +2,20 @@ package httpapi
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"nebulaiq/internal/config"
-	"nebulaiq/internal/testutil"
-	"nebulaiq/internal/workflow"
+	"table-for-you/backend/internal/config"
+	"table-for-you/backend/internal/testutil"
 )
 
 func TestGuestOwnershipAndCSRFBoundary(t *testing.T) {
 	s := testutil.Database(t)
 	c := config.Config{Local: true, OwnerQuota: 20, GlobalQuota: 100, RunTimeout: time.Minute}
-	e := workflow.New(context.Background(), s, nil, nil, c)
+	e := inertResearch{}
 	server := httptest.NewServer(New(s, e, c))
 	defer server.Close()
 	request := func(method, path, payload string, cookie *http.Cookie, origin string, header bool) *http.Response {

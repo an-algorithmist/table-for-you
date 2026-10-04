@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
-	"nebulaiq/internal/domain"
-	"nebulaiq/internal/storage/postgres"
-	"nebulaiq/internal/testutil"
+	"table-for-you/backend/internal/domain"
+	"table-for-you/backend/internal/storage/postgres"
+	"table-for-you/backend/internal/testutil"
 	"testing"
 	"time"
 )

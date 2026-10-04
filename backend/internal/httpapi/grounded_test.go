@@ -3,17 +3,18 @@ package httpapi
 import (
 	"bytes"
 	"context"
-	"github.com/google/uuid"
 	"io"
-	"nebulaiq/internal/config"
-	"nebulaiq/internal/domain"
-	"nebulaiq/internal/testutil"
-	"nebulaiq/internal/workflow"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+
+	"table-for-you/backend/internal/config"
+	"table-for-you/backend/internal/domain"
+	"table-for-you/backend/internal/testutil"
 )
 
 func TestGroundedAcknowledgementAndWidgetOwnership(t *testing.T) {
@@ -23,7 +24,7 @@ func TestGroundedAcknowledgementAndWidgetOwnership(t *testing.T) {
 	owner, _ := s.Owner(ctx, token)
 	chat, _ := s.CreateConversation(ctx, owner)
 	cfg := config.Config{Local: true}
-	engine := workflow.New(ctx, s, nil, nil, cfg)
+	engine := inertResearch{}
 	server := httptest.NewServer(New(s, engine, cfg))
 	defer server.Close()
 	request := func(method, path, payload, session string) *http.Response {

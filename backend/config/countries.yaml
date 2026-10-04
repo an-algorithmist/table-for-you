@@ -1,0 +1,185 @@
+{
+  "countries": {
+    "spain": {
+      "currency": "EUR",
+      "menu_terms": "carta precios"
+    },
+    "france": {
+      "currency": "EUR",
+      "menu_terms": "carte prix"
+    },
+    "germany": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "italy": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "portugal": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "netherlands": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "ireland": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "austria": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "belgium": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "greece": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "finland": {
+      "currency": "EUR",
+      "menu_terms": ""
+    },
+    "united kingdom": {
+      "currency": "GBP",
+      "menu_terms": ""
+    },
+    "uk": {
+      "currency": "GBP",
+      "menu_terms": ""
+    },
+    "poland": {
+      "currency": "PLN",
+      "menu_terms": ""
+    },
+    "india": {
+      "currency": "INR",
+      "menu_terms": "menu prices"
+    },
+    "japan": {
+      "currency": "JPY",
+      "menu_terms": "メニュー 料金"
+    },
+    "united states": {
+      "currency": "USD",
+      "menu_terms": ""
+    },
+    "united states of america": {
+      "currency": "USD",
+      "menu_terms": ""
+    },
+    "usa": {
+      "currency": "USD",
+      "menu_terms": ""
+    },
+    "canada": {
+      "currency": "CAD",
+      "menu_terms": ""
+    },
+    "argentina": {
+      "currency": "ARS",
+      "menu_terms": "carta precios"
+    },
+    "brazil": {
+      "currency": "BRL",
+      "menu_terms": "cardápio preços"
+    },
+    "china": {
+      "currency": "CNY",
+      "menu_terms": ""
+    },
+    "australia": {
+      "currency": "AUD",
+      "menu_terms": ""
+    },
+    "new zealand": {
+      "currency": "NZD",
+      "menu_terms": ""
+    },
+    "mexico": {
+      "currency": "MXN",
+      "menu_terms": ""
+    },
+    "singapore": {
+      "currency": "SGD",
+      "menu_terms": ""
+    },
+    "thailand": {
+      "currency": "THB",
+      "menu_terms": ""
+    },
+    "south korea": {
+      "currency": "KRW",
+      "menu_terms": ""
+    },
+    "chile": {
+      "currency": "CLP",
+      "menu_terms": ""
+    },
+    "colombia": {
+      "currency": "COP",
+      "menu_terms": ""
+    },
+    "peru": {
+      "currency": "PEN",
+      "menu_terms": ""
+    }
+  },
+  "branch_slugs": {
+    "new york": [
+      "new-york",
+      "nyc",
+      "nomad"
+    ],
+    "toronto": [
+      "toronto",
+      "dundas"
+    ],
+    "paris": [
+      "paris",
+      "rivoli"
+    ],
+    "barcelona": [
+      "barcelona"
+    ],
+    "delhi": [
+      "delhi"
+    ],
+    "tokyo": [
+      "tokyo"
+    ],
+    "buenos aires": [
+      "buenos-aires"
+    ],
+    "são paulo": [
+      "sao-paulo"
+    ]
+  },
+  "competing_slugs": [
+    "fort-lauderdale",
+    "bethesda",
+    "washington-dc",
+    "miami",
+    "los-angeles",
+    "chicago",
+    "boston",
+    "atlanta",
+    "vancouver",
+    "montreal",
+    "london",
+    "dubai",
+    "singapore",
+    "new-york",
+    "toronto",
+    "paris",
+    "barcelona",
+    "delhi",
+    "tokyo",
+    "buenos-aires",
+    "sao-paulo"
+  ]
+}

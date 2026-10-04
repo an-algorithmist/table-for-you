@@ -2,10 +2,10 @@ package evidence
 
 import (
 	"math/big"
-	"nebulaiq/internal/domain"
 	"net/url"
 	"regexp"
 	"strings"
+	"table-for-you/backend/internal/domain"
 )
 
 var amounts = regexp.MustCompile(`[0-9]+(?:[.,][0-9]+)*`)

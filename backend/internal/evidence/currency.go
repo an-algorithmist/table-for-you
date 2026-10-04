@@ -1,9 +1,10 @@
 package evidence
 
 import (
-	"nebulaiq/internal/domain"
 	"regexp"
 	"strings"
+	"table-for-you/backend/internal/config"
+	"table-for-you/backend/internal/domain"
 )
 
 var currencyCodes = []string{"EUR", "GBP", "INR", "PLN", "USD", "CAD", "JPY", "ARS", "BRL", "CNY", "AUD", "NZD", "MXN", "CHF", "CZK", "HUF", "DKK", "SEK", "NOK", "SGD", "THB", "KRW", "IDR", "MYR", "VND", "PHP", "AED", "TRY", "CLP", "COP", "PEN"}
@@ -46,9 +47,7 @@ func menuCurrency(doc domain.Document) (string, domain.Citation) {
 	}
 	return "", domain.Citation{}
 }
-func localCurrency(country string) string {
-	return map[string]string{"spain": "EUR", "france": "EUR", "germany": "EUR", "italy": "EUR", "portugal": "EUR", "netherlands": "EUR", "ireland": "EUR", "austria": "EUR", "belgium": "EUR", "greece": "EUR", "finland": "EUR", "united kingdom": "GBP", "uk": "GBP", "poland": "PLN", "india": "INR", "japan": "JPY", "united states": "USD", "united states of america": "USD", "usa": "USD", "canada": "CAD", "argentina": "ARS", "brazil": "BRL", "china": "CNY", "australia": "AUD", "new zealand": "NZD", "mexico": "MXN", "singapore": "SGD", "thailand": "THB", "south korea": "KRW", "chile": "CLP", "colombia": "COP", "peru": "PEN"}[strings.ToLower(strings.TrimSpace(country))]
-}
+func localCurrency(country string) string { return config.Country(country).Currency }
 func containsMeat(quote string) bool {
 	q := normalize(quote)
 	for _, term := range []string{"vegan", "plant-based", "plant based", "meat-free", "mock", "vegetarian", "without meat", "sans viande", "carrot salmon", "mushroom bacon", "soy chicken", "tofu chicken", "vegan salmon"} {

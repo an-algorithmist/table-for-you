@@ -1,8 +1,8 @@
 package evidence
 
 import (
-	"nebulaiq/internal/domain"
 	"strings"
+	"table-for-you/backend/internal/domain"
 	"testing"
 	"time"
 )

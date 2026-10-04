@@ -1,9 +1,9 @@
 package evidence
 
 import (
-	"nebulaiq/internal/domain"
 	"regexp"
 	"strings"
+	"table-for-you/backend/internal/domain"
 )
 
 const currencyToken = `(?:PLN|EUR|USD|CAD|JPY|ARS|BRL|GBP|CHF|CZK|INR|R\$|CA\$|US\$|€|£|₹|zł|円|¥|\$)`

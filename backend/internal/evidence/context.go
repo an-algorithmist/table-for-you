@@ -1,10 +1,10 @@
 package evidence
 
 import (
-	"nebulaiq/internal/domain"
 	"net/url"
 	"regexp"
 	"strings"
+	"table-for-you/backend/internal/domain"
 )
 
 func containsName(names []string, name string) bool {

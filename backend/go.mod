@@ -1,4 +1,4 @@
-module nebulaiq
+module table-for-you/backend
 
 go 1.26.0
 

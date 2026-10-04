@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// Requirements records explicit traveller constraints; budget remains decimal text to avoid float rounding.
 type Requirements struct {
 	City        string   `json:"city"`
 	Country     string   `json:"country"`
@@ -15,6 +16,8 @@ type Requirements struct {
 	Area        string   `json:"area"`
 	VenueOnly   bool     `json:"venue_only"`
 }
+
+// Interpretation is the model intent result used to choose research, clarification or stored-evidence answers.
 type Interpretation struct {
 	Action        string       `json:"action"`
 	Answer        string       `json:"answer"`
@@ -22,6 +25,8 @@ type Interpretation struct {
 	Clarification string       `json:"clarification"`
 	Query         string       `json:"query"`
 }
+
+// Conversation is an owned chat snapshot with optimistic request versioning.
 type Conversation struct {
 	ID           string       `json:"id"`
 	Title        string       `json:"title"`
@@ -31,12 +36,16 @@ type Conversation struct {
 	Messages     []Message    `json:"messages,omitempty"`
 	Runs         []Run        `json:"runs,omitempty"`
 }
+
+// Message is a persisted English chat turn.
 type Message struct {
 	ID        string    `json:"id"`
 	Role      string    `json:"role"`
 	Text      string    `json:"text"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// Run is a durable research execution, including its terminal result and observed usage.
 type Run struct {
 	ID             string       `json:"id"`
 	ConversationID string       `json:"conversation_id"`
@@ -47,6 +56,8 @@ type Run struct {
 	CreatedAt      time.Time    `json:"created_at"`
 	Usage          Usage        `json:"usage"`
 }
+
+// Usage records attempted tool calls and provider-reported token counts; UsageKnown distinguishes missing metadata.
 type Usage struct {
 	Mode            string `json:"research_mode,omitempty"`
 	GroundedModel   string `json:"grounded_model,omitempty"`
@@ -60,126 +71,16 @@ type Usage struct {
 	OutputTokens    int64  `json:"output_tokens"`
 	UsageKnown      bool   `json:"usage_known"`
 }
+
+// Event is a persisted SSE trace entry; Sequence supports reconnect replay.
 type Event struct {
 	Sequence  int64     `json:"sequence"`
 	Type      string    `json:"type"`
 	Message   string    `json:"message"`
 	CreatedAt time.Time `json:"created_at"`
 }
-type SearchHit struct {
-	Title     string    `json:"title"`
-	URL       string    `json:"url"`
-	Content   string    `json:"content"`
-	Score     float64   `json:"score"`
-	FetchedAt time.Time `json:"fetched_at"`
-}
-type Document struct {
-	Method     string    `json:"method,omitempty"`
-	ID         string    `json:"id"`
-	URL        string    `json:"url"`
-	Title      string    `json:"title"`
-	Text       string    `json:"text"`
-	Kind       string    `json:"kind"`
-	Snippet    bool      `json:"snippet"`
-	Historical bool      `json:"historical"`
-	FetchedAt  time.Time `json:"fetched_at"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	Hash       string    `json:"hash"`
-}
-type Citation struct {
-	SourceID string `json:"source_id"`
-	Quote    string `json:"quote"`
-}
-type Constraint struct {
-	Name     string   `json:"name"`
-	Status   string   `json:"status"`
-	Evidence Citation `json:"evidence"`
-	Reason   string   `json:"reason"`
-}
-type Dish struct {
-	Name             string       `json:"name"`
-	EnglishName      string       `json:"english_name"`
-	Description      string       `json:"description"`
-	Price            string       `json:"price"`
-	Currency         string       `json:"currency"`
-	PriceText        string       `json:"price_text"`
-	CurrencyBasis    string       `json:"currency_basis"`
-	CurrencyEvidence Citation     `json:"currency_evidence"`
-	PriceEvidence    Citation     `json:"price_evidence"`
-	MenuType         string       `json:"menu_type"`
-	ValidDate        string       `json:"valid_date"`
-	Meal             string       `json:"meal"`
-	Evidence         Citation     `json:"evidence"`
-	Constraints      []Constraint `json:"constraints"`
-	Status           string       `json:"status"`
-}
-type Review struct {
-	Sentiment string   `json:"sentiment"`
-	Topic     string   `json:"topic"`
-	Summary   string   `json:"summary"`
-	Published string   `json:"published"`
-	Evidence  Citation `json:"evidence"`
-}
-type Candidate struct {
-	Name        string   `json:"name"`
-	Address     string   `json:"address"`
-	OfficialURL string   `json:"official_url"`
-	MenuURL     string   `json:"menu_url"`
-	Reason      string   `json:"reason"`
-	Identity    Citation `json:"identity"`
-}
-type Discovery struct {
-	Candidates []Candidate `json:"candidates"`
-}
-type Restaurant struct {
-	Candidate
-	VenueType        string        `json:"venue_type"`
-	VenueEvidence    Citation      `json:"venue_evidence"`
-	PriceRange       PriceRange    `json:"price_range"`
-	Estimate         PriceEstimate `json:"estimate"`
-	IdentityVerified bool          `json:"identity_verified"`
-	Dishes           []Dish        `json:"dishes"`
-	Reviews          []Review      `json:"reviews"`
-	Limitations      []string      `json:"limitations"`
-}
-type PriceRange struct {
-	Low      string   `json:"low"`
-	High     string   `json:"high"`
-	Currency string   `json:"currency"`
-	Evidence Citation `json:"evidence"`
-}
-type PriceEstimate struct {
-	Low      string     `json:"low"`
-	High     string     `json:"high"`
-	Currency string     `json:"currency"`
-	Basis    string     `json:"basis"`
-	Evidence []Citation `json:"evidence"`
-}
-type Extraction struct {
-	Restaurants []Restaurant `json:"restaurants"`
-}
-type GroundingSource struct {
-	Number int    `json:"number"`
-	URL    string `json:"url"`
-	Title  string `json:"title"`
-}
-type GroundingSupport struct {
-	Text    string `json:"text"`
-	Sources []int  `json:"sources"`
-}
-type URLRetrieval struct {
-	URL    string `json:"url"`
-	Status string `json:"status"`
-}
-type Grounding struct {
-	Text              string             `json:"text"`
-	Model             string             `json:"model"`
-	Sources           []GroundingSource  `json:"sources"`
-	Supports          []GroundingSupport `json:"supports"`
-	Queries           []string           `json:"queries"`
-	URLs              []URLRetrieval     `json:"urls"`
-	SearchSuggestions string             `json:"search_suggestions,omitempty"`
-}
+
+// Result is the persisted renderer contract for recommendations, answers and clarification.
 type Result struct {
 	Grounding         *Grounding   `json:"grounding,omitempty"`
 	Answer            string       `json:"answer,omitempty"`

@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
+// Config holds validated process settings loaded once at startup.
 type Config struct {
+	MaxModelCalls                                                        int
 	GroundedModel                                                        string
 	GroundedOwnerQuota, GroundedGlobalQuota, GroundedMaxOutput           int
 	GroundedEnabled                                                      bool
@@ -19,6 +21,7 @@ type Config struct {
 	RunTimeout                                                           time.Duration
 }
 
+// LoadEnv loads an optional private env file without overriding process variables.
 func LoadEnv(path string) error {
 	f, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -44,13 +47,21 @@ func LoadEnv(path string) error {
 			v = v[1 : len(v)-1]
 		}
 		if _, exists := os.LookupEnv(k); !exists {
-			os.Setenv(k, v)
+			if err := os.Setenv(k, v); err != nil {
+				return err
+			}
 		}
 	}
 	return s.Err()
 }
+
+// Load validates required settings and applies bounded assignment defaults.
 func Load() (Config, error) {
+	if _, err := LoadCountries(); err != nil {
+		return Config{}, err
+	}
 	c := Config{DatabaseURL: os.Getenv("DATABASE_URL"), GeminiKey: os.Getenv("GEMINI_API_KEY"), TavilyKey: os.Getenv("TAVILY_API_KEY"), Model: env("MODEL_NAME", "gemini-3.1-flash-lite"), Provider: env("MODEL_PROVIDER", "gemini"), Port: env("PORT", "8080"), AccessCode: os.Getenv("REVIEWER_ACCESS_CODE"), Local: env("APP_ENV", "local") == "local", OwnerQuota: number("MAX_DAILY_RUNS_PER_OWNER", 20), GlobalQuota: number("MAX_DAILY_RUNS_GLOBAL", 100), RunTimeout: 180 * time.Second}
+	c.MaxModelCalls = min(number("MAX_MODEL_CALLS_PER_RUN", 9), 20)
 	c.GroundedModel = env("GROUNDED_MODEL_NAME", "gemini-3.8-flash")
 	c.GroundedEnabled = env("ENABLE_GOOGLE_GROUNDED", "true") == "true"
 	c.GroundedOwnerQuota = number("MAX_DAILY_GROUNDED_PER_OWNER", 3)
