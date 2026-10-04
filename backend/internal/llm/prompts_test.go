@@ -6,7 +6,7 @@ import (
 )
 
 func TestEmbeddedWorkflowPrompts(t *testing.T) {
-	for _, name := range []string{"intent", "discovery", "menu_extract", "grounded", "untrusted"} {
+	for _, name := range []string{"intent", "discovery", "menu_extract", "grounded", "untrusted", "menu_transcribe"} {
 		t.Run(name, func(t *testing.T) {
 			text, err := Prompt(name)
 			if err != nil || strings.TrimSpace(text) == "" {

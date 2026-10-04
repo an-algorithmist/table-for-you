@@ -29,7 +29,7 @@ func Open(ctx context.Context, url string) (*Store, error) {
 	}
 	if err = p.Ping(ctx); err != nil {
 		p.Close()
-		return nil, errors.New("PostgreSQL connection failed")
+		return nil, errors.New("postgresql connection failed")
 	}
 	return &Store{p}, nil
 }

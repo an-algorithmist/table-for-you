@@ -11,7 +11,7 @@ import (
 
 func (j *job) groundedResearch(req domain.Requirements, message string) (*domain.Result, error) {
 	if !j.e.GroundedReady() {
-		return nil, errors.New("Google-grounded research is unavailable; use standard research")
+		return nil, errors.New("google-grounded research is unavailable; use standard research")
 	}
 	_ = j.event("route.google_grounded", "Google-grounded research selected. One provider request; Google controls the number of searches. No automatic paid retry.")
 	instruction, err := llm.Prompt("grounded")
