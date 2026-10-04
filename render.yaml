@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: nebulaiq
+    runtime: go
+    plan: free
+    region: frankfurt
+    buildCommand: cd backend && go build -o bin/nebula ./cmd/nebula
+    startCommand: cd backend && ./bin/nebula migrate && ./bin/nebula serve
+    healthCheckPath: /readyz
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nebulaiq-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: REVIEWER_ACCESS_CODE
+        sync: false
+      - key: MODEL_PROVIDER
+        value: gemini
+      - key: MODEL_NAME
+        value: gemini-3.1-flash-lite
+databases:
+  - name: nebulaiq-db
+    plan: free
+    region: frankfurt
+    databaseName: nebula
+    user: nebula

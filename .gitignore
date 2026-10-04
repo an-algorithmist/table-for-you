@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+bin/
+*.exe
+*.log
+node_modules/
+.playwright-mcp/
+work/
+
+**/bin/
+**/.env
+**/*.log
+coverage.out

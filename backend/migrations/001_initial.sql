@@ -1,0 +1,17 @@
+CREATE TABLE owners (id uuid PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE browser_sessions (id uuid PRIMARY KEY, owner_id uuid NOT NULL REFERENCES owners(id), token_hash text NOT NULL UNIQUE, expires_at timestamptz NOT NULL, revoked_at timestamptz);
+CREATE INDEX browser_sessions_expiry ON browser_sessions(expires_at);
+CREATE TABLE conversations (id uuid PRIMARY KEY, owner_id uuid NOT NULL REFERENCES owners(id), title text NOT NULL DEFAULT 'New dining research', requirements jsonb NOT NULL DEFAULT '{}', version integer NOT NULL DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX conversation_owner ON conversations(owner_id,updated_at DESC);
+CREATE TABLE messages (id uuid PRIMARY KEY, conversation_id uuid NOT NULL REFERENCES conversations(id) ON DELETE CASCADE, role text NOT NULL CHECK (role IN ('user','assistant')), text text NOT NULL, sequence bigint NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(conversation_id,sequence));
+CREATE TABLE runs (id uuid PRIMARY KEY, conversation_id uuid NOT NULL REFERENCES conversations(id) ON DELETE CASCADE, request_id uuid NOT NULL, requirements jsonb NOT NULL, status text NOT NULL CHECK(status IN ('running','completed','partial','failed','cancelled','interrupted')), refresh boolean NOT NULL DEFAULT false, result jsonb, usage jsonb NOT NULL DEFAULT '{}', error text NOT NULL DEFAULT '', cancel_requested boolean NOT NULL DEFAULT false, deadline timestamptz NOT NULL, lease_until timestamptz NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), finished_at timestamptz, UNIQUE(conversation_id,request_id));
+CREATE UNIQUE INDEX one_active_run ON runs(conversation_id) WHERE status='running';
+CREATE INDEX run_conversation ON runs(conversation_id,created_at DESC);
+CREATE TABLE run_events (run_id uuid NOT NULL REFERENCES runs(id) ON DELETE CASCADE, sequence bigint NOT NULL, type text NOT NULL, message text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(run_id,sequence));
+CREATE TABLE search_cache (owner_id uuid NOT NULL REFERENCES owners(id), request_hash text NOT NULL, payload jsonb NOT NULL, fetched_at timestamptz NOT NULL, expires_at timestamptz NOT NULL, PRIMARY KEY(owner_id,request_hash));
+CREATE INDEX search_expiry ON search_cache(expires_at);
+CREATE TABLE source_documents (id uuid PRIMARY KEY, lookup_hash text NOT NULL, url text NOT NULL, content_hash text NOT NULL, payload jsonb NOT NULL, fetched_at timestamptz NOT NULL, expires_at timestamptz NOT NULL, last_used_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX source_lookup ON source_documents(lookup_hash,fetched_at DESC);
+CREATE INDEX source_expiry ON source_documents(expires_at);
+CREATE TABLE extractions (request_hash text PRIMARY KEY, payload jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), last_used_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE run_evidence (run_id uuid NOT NULL REFERENCES runs(id) ON DELETE CASCADE, source_id uuid NOT NULL, snapshot jsonb NOT NULL, PRIMARY KEY(run_id,source_id));
