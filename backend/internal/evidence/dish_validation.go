@@ -21,6 +21,12 @@ func validateDishes(req domain.Requirements, r domain.Restaurant, docs []domain.
 			rejected = append(rejected, d)
 			continue
 		}
+		if req.FoodPreference != "" && !strings.Contains(normalize(d.Evidence.Quote), normalize(req.FoodPreference)) {
+			d.Status = "contradicted"
+			d.Constraints = []domain.Constraint{{Name: "food preference", Status: "contradicted", Evidence: d.Evidence, Reason: "The cited dish does not establish the requested food: " + req.FoodPreference}}
+			rejected = append(rejected, d)
+			continue
+		}
 		state := "supported"
 		mealEvidence := domain.Citation{}
 		for _, constraint := range d.Constraints {

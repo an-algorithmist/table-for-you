@@ -37,7 +37,7 @@ func nextResearchGap(req domain.Requirements, result domain.Result, candidates [
 		if missingPrice || missingDiet {
 			focus := "menu prices " + req.Currency
 			if missingDiet {
-				focus += " " + req.Diet + " ingredients " + strings.Join(req.Excluded, " ")
+				focus += " " + foodSearchTerms(req) + " ingredients " + strings.Join(req.Excluded, " ")
 			}
 			return researchGap{c.Name, fmt.Sprintf(`"%s" %s %s %s %s %s %s`, c.Name, c.Address, req.City, req.Country, req.Meal, focus, missingDishNames(r)), "menu", "Checking missing prices, currency or dietary ingredients at " + c.Name}
 		}

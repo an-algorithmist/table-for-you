@@ -58,6 +58,14 @@ func (j *job) validate(req domain.Requirements, raw domain.Extraction) domain.Re
 		for k := range r.Dishes {
 			d := &r.Dishes[k]
 			cite(&d.Evidence)
+			if d.Evidence.SourceID == "" && evidence.RecoverMenuDish(d, branchDocs) {
+				if j.e != nil {
+					_ = j.event("menu.citation_recovered", r.Name+" / "+d.Name+": recovered a literal menu heading and description")
+				}
+			}
+			if d.Evidence.SourceID == "" && j.e != nil {
+				_ = j.event("menu.citation_rejected", r.Name+" / "+d.Name+": extracted quotation was not a literal menu passage")
+			}
 			cite(&d.PriceEvidence)
 			for x := range d.Constraints {
 				cite(&d.Constraints[x].Evidence)

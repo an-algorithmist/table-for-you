@@ -15,9 +15,9 @@ func (j *job) discover(req domain.Requirements, text, query string) ([]domain.Ca
 		return nil, err
 	}
 	if len(candidates) == 0 {
-		discoveryQuery := fmt.Sprintf("%s %s %s %s restaurants official menu address", req.City, req.Country, req.Meal, req.Diet)
+		discoveryQuery := fmt.Sprintf("%s %s %s %s restaurants official menu address", req.City, req.Country, req.Meal, foodSearchTerms(req))
 		if strings.TrimSpace(query) != "" {
-			discoveryQuery = query
+			discoveryQuery = positiveFoodQuery(query, req)
 		}
 		hits, err := j.search(discoveryQuery, 5)
 		if err != nil {
@@ -61,4 +61,22 @@ func allowedURL(u string, hits []domain.SearchHit) bool {
 		}
 	}
 	return false
+}
+
+func foodSearchTerms(req domain.Requirements) string {
+	if req.FoodPreference != "" {
+		return req.FoodPreference
+	}
+	if req.Diet == "non-vegetarian" {
+		return "meat fish"
+	}
+	return req.Diet
+}
+func positiveFoodQuery(query string, req domain.Requirements) string {
+	if req.Diet == "non-vegetarian" {
+		for _, word := range []string{"non-vegetarian", "non vegetarian", "non-veg", "non veg"} {
+			query = strings.ReplaceAll(strings.ToLower(query), word, foodSearchTerms(req))
+		}
+	}
+	return query
 }

@@ -112,3 +112,21 @@ func TestPriceSnippetIsNotLostBehindEarlierSnippet(t *testing.T) {
 		t.Fatal("new price snippet discarded or exact duplicate retained")
 	}
 }
+
+func TestChickenQueryUsesPositiveFoodTerms(t *testing.T) {
+	q := positiveFoodQuery("non-veg chicken dinner restaurants in Tokyo", domain.Requirements{Diet: "non-vegetarian", FoodPreference: "chicken"})
+	if strings.Contains(q, "veg") || !strings.Contains(q, "chicken") {
+		t.Fatal(q)
+	}
+}
+
+func TestChickenPreferenceSurvivesBudgetFollowup(t *testing.T) {
+	got := PreserveExclusions(domain.Requirements{Diet: "non-vegetarian", FoodPreference: "chicken"}, domain.Requirements{Diet: "non-vegetarian", Budget: "2000"}, "under 2000")
+	if got.FoodPreference != "chicken" {
+		t.Fatal("food preference lost")
+	}
+	changed := PreserveExclusions(got, domain.Requirements{Diet: "non-vegetarian", FoodPreference: "fish"}, "fish instead")
+	if changed.FoodPreference != "fish" {
+		t.Fatal("explicit food change ignored")
+	}
+}

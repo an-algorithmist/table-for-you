@@ -4,17 +4,18 @@ import "time"
 
 // Requirements records explicit traveller constraints; budget remains decimal text to avoid float rounding.
 type Requirements struct {
-	City        string   `json:"city"`
-	Country     string   `json:"country"`
-	Meal        string   `json:"meal"`
-	Diet        string   `json:"diet"`
-	Excluded    []string `json:"excluded"`
-	Budget      string   `json:"budget"`
-	Currency    string   `json:"currency"`
-	BudgetBasis string   `json:"budget_basis"`
-	Cuisine     string   `json:"cuisine"`
-	Area        string   `json:"area"`
-	VenueOnly   bool     `json:"venue_only"`
+	City           string   `json:"city"`
+	Country        string   `json:"country"`
+	Meal           string   `json:"meal"`
+	Diet           string   `json:"diet"`
+	Excluded       []string `json:"excluded"`
+	Budget         string   `json:"budget"`
+	Currency       string   `json:"currency"`
+	BudgetBasis    string   `json:"budget_basis"`
+	FoodPreference string   `json:"food_preference,omitempty"`
+	Cuisine        string   `json:"cuisine"`
+	Area           string   `json:"area"`
+	VenueOnly      bool     `json:"venue_only"`
 }
 
 // Interpretation is the model intent result used to choose research, clarification or stored-evidence answers.

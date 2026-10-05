@@ -10,7 +10,7 @@ import (
 	"table-for-you/backend/internal/storage/postgres"
 )
 
-const extractionVersion = "menu-review-v14-bm25-prices"
+const extractionVersion = "menu-review-v15-literal-menu-rows"
 
 func (j *job) extract(req domain.Requirements, candidates []domain.Candidate) (domain.Extraction, error) {
 	aggregate := domain.Extraction{Restaurants: []domain.Restaurant{}}
@@ -53,7 +53,7 @@ func (j *job) extractCandidate(req domain.Requirements, candidate domain.Candida
 	_ = j.event("menu.extracting", "Extracting and translating menu/review evidence for "+candidate.Name)
 	sourceInput := []map[string]any{}
 	for _, d := range documents {
-		selected := RelevantText(d.Text, d.Kind, candidate.Name+" "+req.Meal+" "+req.Currency+" "+j.passageQuery)
+		selected := RelevantText(d.Text, d.Kind, candidate.Name+" "+req.Meal+" "+req.Currency+" "+req.FoodPreference+" "+j.passageQuery)
 		if d.Kind == "menu" && menuPrice.MatchString(d.Text) && !menuPrice.MatchString(selected) {
 			_ = j.event("price.selection_gap", "Price-bearing rows omitted during passage selection: "+d.URL)
 		}

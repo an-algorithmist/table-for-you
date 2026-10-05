@@ -13,7 +13,7 @@ func (j *job) collectEvidence(req domain.Requirements, candidates []domain.Candi
 	for i := range candidates {
 		c := &candidates[i]
 		j.activeCandidate = c.Name
-		menuHits, err := j.searchPurpose(fmt.Sprintf(`"%s" %s %s official menu %s prices`, c.Name, req.City, req.Country, req.Meal)+" "+localMenuTerms(req.Country), 5, "menu")
+		menuHits, err := j.searchPurpose(fmt.Sprintf(`"%s" %s %s official menu %s prices`, c.Name, req.City, req.Country, req.Meal)+" "+foodSearchTerms(req)+" "+localMenuTerms(req.Country), 5, "menu")
 		if err != nil {
 			j.limitations = append(j.limitations, "Menu search failed for "+c.Name)
 			continue

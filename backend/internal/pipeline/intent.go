@@ -31,6 +31,9 @@ func (j *job) interpret(text string) (domain.Interpretation, *domain.Result, err
 	if err = j.generate(instruction, marshal(input), domain.Interpretation{}, &parsed); err != nil {
 		return parsed, previous, err
 	}
+	if strings.Contains(strings.ToLower(text), "chicken") && !strings.Contains(strings.ToLower(text), "no chicken") && !strings.Contains(strings.ToLower(text), "without chicken") {
+		parsed.Requirements.FoodPreference = "chicken"
+	}
 	parsed.Requirements = PreserveExclusions(j.run.Requirements, parsed.Requirements, text)
 	parsed.Clarification = clarification(parsed.Requirements, parsed.Clarification)
 	if err = j.e.Store.Requirements(j.ctx, j.run, parsed.Requirements); err != nil {
@@ -70,6 +73,9 @@ func PreserveExclusions(previous, next domain.Requirements, text string) domain.
 		next.VenueOnly = false
 	}
 	low := strings.ToLower(text)
+	if next.FoodPreference == "" && !strings.Contains(low, "any meat") && !strings.Contains(low, "no food preference") && !strings.Contains(low, "no longer want "+previous.FoodPreference) {
+		next.FoodPreference = previous.FoodPreference
+	}
 	for _, x := range previous.Excluded {
 		removed := false
 		for _, phrase := range []string{"allow " + x, "remove " + x + " restriction", x + " is okay", x + " is ok", "no longer exclude " + x} {

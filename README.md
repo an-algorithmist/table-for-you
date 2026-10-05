@@ -10,7 +10,7 @@ Example request:
 
 ## Notable features
 
-- **Conversational requirements:** accepts a city, meal, dietary preference, ingredient exclusions, cuisine, area and optional budget. Asks for missing or consequentially ambiguous information before restaurant research.
+- **Conversational requirements:** accepts a city, meal, dietary preference, ingredient exclusions, food preferences such as chicken, cuisine, area and optional budget. Asks for missing or consequentially ambiguous information before restaurant research.
 - **Dietary preferences:** supports vegetarian, vegan, non-vegetarian, gluten-free and ingredient exclusions such as onion or garlic. Distinguishes vegetarian dishes from an exclusively vegetarian venue.
 - **Menu research and translation:** retrieves menu pages, follows relevant menu links and extracts original dish names, English descriptions, listed amounts and currency. A bounded Gemini transcription fallback can read supported public menu PDFs or images.
 - **Source-backed recommendations:** links restaurant/menu pages and lets users inspect the passages supporting menu, price and dietary claims. Venue-wide evidence can produce a **Pure veg** or **Vegan venue** badge.
