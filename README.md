@@ -72,50 +72,53 @@ The backend and frontend are separate Go modules connected by `go.work` and a lo
 
 ## High-level design
 
-The standard route is a **retrieval-augmented generation (RAG) pipeline over live web evidence**. Retrieved menu/review text is supplied to Gemini for structured extraction and translation, then checked deterministically before display. It uses PostgreSQL caches and source snapshots, not embeddings or a vector database.
+The application uses **web retrieval-augmented generation**: it retrieves public menu/review evidence, selects relevant passages, and supplies them to Gemini for structured extraction, translation and source-backed responses. This follows the RAG pattern of augmenting a model with retrieved external context. It does not maintain an embedding index or vector database; PostgreSQL stores source snapshots, cached research and conversation history. BM25 ranks passages within retrieved documents, while heuristic scoring ranks candidate URLs.
+
+### Overall architecture
+
+This diagram shows components and their dependencies. The standard research sequence is shown separately below.
+
+```mermaid
+flowchart LR
+    UI["Chat interface"] -->|Requests| API["Go HTTP API"]
+    API --> ORCH["Conversation and research orchestrator"]
+    API -->|Responses| UI
+
+    subgraph ROUTES["Research routes"]
+        direction TB
+        STD["Standard research"]
+        GROUND["Optional grounded research"]
+    end
+
+    ORCH --> STD
+    ORCH --> GROUND
+    STD --> TAVILY["Tavily Search and Extract"]
+    STD --> GEMINI["Gemini extraction and translation"]
+    GROUND --> GOOGLE["Gemini with Google Search and URL context"]
+    ORCH <--> DB[("PostgreSQL: history, evidence and caches")]
+    ORCH --> SSE["Persisted progress events via SSE"]
+    SSE --> UI
+```
+
+The orchestrator interprets requests, asks for missing details, reuses saved evidence for eligible follow-ups, and selects the research route. Both routes share ownership checks, admission limits, persistence and progress reporting. Google-grounded research requires explicit cost acknowledgement.
+
+### Standard research pipeline
 
 ```mermaid
 flowchart TD
-    UI[Agentic chat interface] --> API[Go HTTP API: session, ownership and admission]
-    API --> INT[Interpret request and resolve follow-up context]
-    INT --> ACTION{Required next action}
-    ACTION -->|Missing details| ASK[Ask a clarification question]
-    ASK --> UI
-    ACTION -->|Explain existing result| SAVED[Read matching stored evidence]
-    SAVED --> ANSWER[Generate an evidence-based explanation]
-    ACTION -->|Research| MODE{Research mode}
-
-    subgraph STANDARD[Standard web RAG pipeline]
-        DISC[Tavily discovery search] --> SHORT[Shortlist up to 3 restaurant branches]
-        SHORT --> FETCH[Retrieve menus, prices and contextual reviews]
-        FETCH --> IR[URL reranking and BM25 menu passages]
-        IR --> EXTRACT[Gemini: structured extraction and English translation]
-        EXTRACT --> CHECK[Validate citations, branch, diet, meal and price]
-        CHECK --> GAPS{Consequential evidence gaps and budget remaining?}
-        GAPS -->|Yes: at most 2 rounds| TARGET[Targeted search and extraction]
-        TARGET --> CHECK
-        GAPS -->|No| CARDS[Partition supported choices, possible options and exclusions]
-    end
-
-    MODE -->|Default| DISC
-    MODE -->|Explicit cost acknowledgement| GROUND[Gemini with Google Search and URL context]
-    GROUND --> ATTR[Grounded prose, provider citations and search metadata]
-    CARDS --> STORE[Persist result, usage and source evidence]
-    ATTR --> FORMAT[One plain formatting attempt: attributed shortlist]
-    FORMAT --> STORE
-    ANSWER --> STORE
-    STORE --> UI
-
-    DB[(PostgreSQL: history, caches, snapshots, quotas and trace events)] -.-> API
-    DB -.-> SAVED
-    DB -.-> FETCH
-    DB -.-> EXTRACT
-    STORE --> DB
-    API -.-> SSE[SSE: persisted research progress and completion]
-    CHECK -.-> SSE
-    GROUND -.-> SSE
-    SSE --> UI
+    REQUEST["1. Interpret requirements and conversation context"]
+    REQUEST --> DISCOVER["2. Discover and shortlist restaurant branches"]
+    DISCOVER --> RETRIEVE["3. Rank source URLs and retrieve menus, prices and reviews"]
+    RETRIEVE --> RANK["4. Select BM25 menu passages"]
+    RANK --> EXTRACT["5. Extract and translate with Gemini"]
+    EXTRACT --> VALIDATE["6. Validate citations, branch, diet, meal and prices"]
+    VALIDATE --> GAPS{"Useful evidence gaps and budget remaining?"}
+    GAPS -->|Yes: up to two rounds| REPAIR["Target missing evidence and re-extract"]
+    REPAIR --> VALIDATE
+    GAPS -->|No| RESULT["7. Build shortlist and persist evidence, usage and events"]
 ```
+
+Clarification and evidence-only follow-ups can finish before restaurant discovery. Cache hits can reuse compatible source text or extraction results. The repair loop stays within the existing call caps and request deadline.
 
 ### Standard pipeline steps
 
@@ -186,13 +189,6 @@ Coverage can be extended through country defaults and relevant Go language/ident
 - Model translation, extraction and visual transcription can misinterpret source material. Standard mode checks supporting passages; grounded prose uses provider citations without the same independent dish-level validation.
 - Ingredient omissions do not establish absence, and cross-contamination is not assessed. Published menus do not confirm stock or availability for a future visit.
 - Listed prices are not checked for freshness. Estimates provide planning ranges rather than exact dish prices or guaranteed per-person budget matches.
-
-### Access, providers and scope
-
-- History uses browser ownership rather than account authentication; losing the session cookie can prevent recovery.
-- Free usage depends on provider quotas and account billing. Application call limits do not enforce a monetary ceiling or provider-wide RPM/TPM throttle. Grounded work already started may be billed even after cancellation.
-- Provider interfaces are separable; Gemini and Tavily are the implemented adapters. An OpenAI adapter is not included.
-- The prototype supports restaurant research and recommendations; bookings, payments and exhaustive worldwide indexing are outside its scope.
 
 ## Local setup
 
