@@ -120,6 +120,9 @@ func validateDishes(req domain.Requirements, r domain.Restaurant, docs []domain.
 		}
 		d.PriceEvidence = priceCitation
 		if d.Price != "" && d.Currency == "" {
+			d.Currency = currencyInText(priceCitation.Quote)
+		}
+		if d.Price != "" && d.Currency == "" {
 			d.Currency, d.CurrencyEvidence = menuCurrency(byID[priceCitation.SourceID])
 		}
 		if d.Price == "" {

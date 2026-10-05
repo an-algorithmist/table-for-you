@@ -6,7 +6,7 @@ import (
 	"table-for-you/backend/internal/domain"
 )
 
-const currencyToken = `(?:PLN|EUR|USD|CAD|JPY|ARS|BRL|GBP|CHF|CZK|INR|R\$|CA\$|US\$|€|£|₹|zł|円|¥|\$)`
+const currencyToken = `(?:PLN|EUR|USD|CAD|JPY|ARS|BRL|GBP|CHF|CZK|INR|R\$|CA\$|US\$|€|£|₹|zł|円|yen\b|¥|\$)`
 const amountToken = `[0-9]+(?:[.,][0-9]+)*`
 const priceToken = `(?:` + currencyToken + `[ \t\x{00A0}]*` + amountToken + `|` + amountToken + `[ \t\x{00A0}]*` + currencyToken + `)`
 

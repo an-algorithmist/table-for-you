@@ -34,7 +34,7 @@ func TestLocaleNumberNormalization(t *testing.T) {
 	}
 }
 func TestNewCurrencyMarkers(t *testing.T) {
-	for _, tc := range []struct{ s, w string }{{"Soup CAD 12", "CAD"}, {"Soup R$ 17,00", "BRL"}, {"Tuna JPY 1500", "JPY"}, {"Steak ARS 12.500", "ARS"}, {"Dish $15", ""}, {"Dish ¥1500", ""}} {
+	for _, tc := range []struct{ s, w string }{{"Soup CAD 12", "CAD"}, {"Soup R$ 17,00", "BRL"}, {"Tuna JPY 1500", "JPY"}, {"Steak ARS 12.500", "ARS"}, {"Dish $15", ""}, {"Dish ¥1500", ""}, {"Chicken set 1200 yen", "JPY"}, {"Soup 12 EUR or 2000 yen", ""}} {
 		if got := currencyInText(tc.s); got != tc.w {
 			t.Errorf("%s: %s", tc.s, got)
 		}
@@ -62,5 +62,14 @@ func TestIdentityRejectsOtherRestaurantOnCityGuide(t *testing.T) {
 	recoverIdentity(&r, req, []domain.Document{doc})
 	if !strings.Contains(r.Identity.Quote, "Sam's Falafel") {
 		t.Fatal("correct restaurant identity was not recovered")
+	}
+}
+func TestYenSnippetPriceKeepsExplicitCurrency(t *testing.T) {
+	doc := domain.Document{ID: "m", Kind: "menu", Snippet: true, Text: "Chicken set meal: 1200 yen"}
+	raw := domain.Extraction{Restaurants: []domain.Restaurant{{Candidate: domain.Candidate{Name: "Kitchen"}, Dishes: []domain.Dish{{Name: "Chicken set meal", Price: "1200", PriceText: "1200 yen", Evidence: domain.Citation{SourceID: "m", Quote: doc.Text}}}}}}
+	result := Validate(domain.Requirements{City: "Tokyo", Country: "Japan", Meal: "dinner", Diet: "non-vegetarian", Budget: "3000", Currency: "JPY", BudgetBasis: "per_dish"}, raw, []domain.Document{doc}, time.Now())
+	places := append(append(result.Confirmed, result.Alternatives...), result.Excluded...)
+	if len(places) != 1 || len(places[0].Dishes) != 1 || places[0].Dishes[0].Currency != "JPY" {
+		t.Fatalf("explicit yen currency lost: %+v", result)
 	}
 }

@@ -133,6 +133,7 @@ func checkedGrounded(g *domain.Grounding, raw domain.GroundedExtraction) []domai
 				break
 			}
 			d.Evidence.Quote = literalSpan(g.Text, d.Evidence.Quote)
+			d = recoverGroundedPrice(g, r, d)
 			if d.Name == "" || !groundedClaimOK(g, d.Evidence) || !strings.Contains(strings.ToLower(d.Evidence.Quote), strings.ToLower(d.Name)) {
 				continue
 			}
@@ -200,7 +201,7 @@ func checkedGrounded(g *domain.Grounding, raw domain.GroundedExtraction) []domai
 // Price tokens must occur in a currency-bearing amount, not just a portion or count.
 func groundedListedAmount(amount, quote string) bool {
 	quote = regexp.MustCompile(`(?i)(?:under|below|less than)\s*(?:EUR|JPY|GBP|INR|USD|CAD|PLN|BRL|ARS|€|£|₹|¥)\s*[0-9]+(?:[.,][0-9]+)*`).ReplaceAllString(quote, "")
-	matches := regexp.MustCompile(`(?i)(?:(?:EUR|JPY|GBP|INR|USD|CAD|PLN|BRL|ARS|€|£|₹|¥)\s*[0-9]+(?:[.,][0-9]+)*(?:\s*[–—-]\s*[0-9]+(?:[.,][0-9]+)*)?|[0-9]+(?:[.,][0-9]+)*\s*(?:EUR|JPY|GBP|INR|USD|CAD|PLN|BRL|ARS|€|£|₹|円))`).FindAllString(quote, -1)
+	matches := regexp.MustCompile(`(?i)(?:(?:EUR|JPY|GBP|INR|USD|CAD|PLN|BRL|ARS|€|£|₹|¥)\s*[0-9]+(?:[.,][0-9]+)*(?:\s*[–—-]\s*(?:EUR|JPY|GBP|INR|USD|CAD|PLN|BRL|ARS|€|£|₹|¥)?\s*[0-9]+(?:[.,][0-9]+)*)?|[0-9]+(?:[.,][0-9]+)*\s*(?:EUR|JPY|GBP|INR|USD|CAD|PLN|BRL|ARS|€|£|₹|円))`).FindAllString(quote, -1)
 	for _, m := range matches {
 		if evidence.ListedAmountInText(amount, m) {
 			return true

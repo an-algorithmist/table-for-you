@@ -12,6 +12,9 @@ var currencySymbols = map[string]string{"EUR": "€", "GBP": "£", "INR": "₹",
 
 func currencyInText(text string) string {
 	found := map[string]bool{}
+	if regexp.MustCompile(`(?i)(?:[0-9]+(?:[.,][0-9]+)*\s*yen\b|\byen\s*[0-9]+|prices\s+(?:are\s+)?(?:in\s+)?yen\b)`).MatchString(text) {
+		found["JPY"] = true
+	}
 	for _, code := range currencyCodes {
 		if regexp.MustCompile(`(?im)(?:all prices|prices|currency)\s+(?:are\s+)?(?:in\s+)?` + code + `\b`).MatchString(text) {
 			found[code] = true
