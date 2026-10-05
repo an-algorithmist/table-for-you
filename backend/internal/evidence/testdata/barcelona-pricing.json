@@ -1,0 +1,17 @@
+{
+  "dish": {
+    "name": "Koftas"
+  },
+  "source": {
+    "id": "0aa06f51-c516-43b9-acbe-8ee46bc5b85e",
+    "url": "https://guidavera.com/spain/barcelona/restaurants/aguaribay",
+    "title": "Aguaribay, Barcelona — Menu, Hours & Ratings | Guidavera",
+    "text": "Koftas€8 (3 pcs) / €11.50 (5 pcs)\n\n  Homemade millet croquettes with our pickled seasonal vegetables and sweet chili sauce. Vegan, gluten-free.\n Nachos Aguaribay (for 2)€12.90 [...",
+    "kind": "menu",
+    "snippet": true,
+    "historical": false,
+    "fetched_at": "2026-10-05T05:31:03.9427052Z",
+    "expires_at": "2026-10-05T11:31:03.9427052Z",
+    "hash": "0e1793c1dfd76739b357217878225d5262f6eebbbb4588ba13d2ca20057d09a9"
+  }
+}

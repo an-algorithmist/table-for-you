@@ -120,3 +120,6 @@ func estimateSpend(r *domain.Restaurant, docs map[string]domain.Document) {
 		r.Estimate = domain.PriceEstimate{Low: min.FloatString(2), High: max.FloatString(2), Currency: currency, Basis: basis, Evidence: citations}
 	}
 }
+
+// ListedAmountInText compares an amount to complete numeric tokens in supporting prose.
+func ListedAmountInText(value, text string) bool { return quotedAmount(value, text) }

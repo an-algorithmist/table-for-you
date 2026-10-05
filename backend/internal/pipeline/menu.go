@@ -1,11 +1,13 @@
 package pipeline
 
 import (
+	"golang.org/x/text/unicode/norm"
 	"net/url"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 
 	"table-for-you/backend/internal/domain"
 	"table-for-you/backend/internal/providers"
@@ -17,33 +19,24 @@ var datedMenuFile = regexp.MustCompile(`(?i)(?:menu|carta|cardapio)[^/]{0,30}?((
 var datedPath = regexp.MustCompile(`/((?:19|20)\d{2})/`)
 var menuPrice = regexp.MustCompile(`(?i)(?:EUR|PLN|USD|CAD|JPY|ARS|BRL|GBP|CZK|HUF|CHF|DKK|SEK|NOK|INR|€|£|\$|zł|₹|円|¥)\s*[0-9]+(?:[.,][0-9]{1,2})?|[0-9]+(?:[.,][0-9]{1,2})?\s*(?:EUR|PLN|USD|GBP|CZK|HUF|CHF|DKK|SEK|NOK|INR|€|£|zł)`)
 
-func (j *job) hasMenuPrices(name string) bool {
-	for _, d := range j.candidateDocs(name) {
-		if d.Kind == "menu" && !d.Snippet && len(menuPrice.FindAllString(d.Text, -1)) >= 2 {
-			return true
-		}
-	}
-	return false
-}
-
 var nameSeparators = regexp.MustCompile(`[^\p{L}\p{N}]+`)
 
 // Search ranking alone does not establish that a result concerns this branch.
 // Require the restaurant name in title, URL or snippet before spending fetch quota.
 func relevantHits(hits []domain.SearchHit, name string) []domain.SearchHit {
-	words := strings.Fields(nameSeparators.ReplaceAllString(strings.ToLower(name), " "))
+	words := strings.Fields(nameSeparators.ReplaceAllString(foldName(name), " "))
 	if len(words) == 0 {
 		return nil
 	}
 	out := []domain.SearchHit{}
 	for _, h := range hits {
-		body := " " + nameSeparators.ReplaceAllString(strings.ToLower(h.Title+" "+h.URL+" "+h.Content), " ") + " "
+		body := " " + nameSeparators.ReplaceAllString(foldName(h.Title+" "+h.URL+" "+h.Content), " ") + " "
 		match := true
 		for _, word := range words {
 			if word == "the" || word == "restaurant" {
 				continue
 			}
-			if !strings.Contains(body, " "+word+" ") {
+			if !strings.Contains(body, " "+word+" ") && !strings.Contains(strings.ReplaceAll(body, " ", ""), strings.Join(words, "")) {
 				match = false
 				break
 			}
@@ -84,8 +77,8 @@ func prioritizeMenus(hits []domain.SearchHit, c domain.Candidate, req domain.Req
 				s -= 4
 			}
 		}
-		if datedPath.MatchString(path) {
-			s -= 12
+		if menuPrice.MatchString(h.Content) || numericRow.MatchString(h.Content) {
+			s += 8
 		}
 		if aggregatorURL(h.URL) {
 			s -= 15
@@ -151,4 +144,14 @@ func historicalURL(u string) bool {
 		}
 	}
 	return false
+}
+
+func foldName(v string) string {
+	var b strings.Builder
+	for _, r := range norm.NFD.String(strings.ToLower(v)) {
+		if !unicode.Is(unicode.Mn, r) {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }

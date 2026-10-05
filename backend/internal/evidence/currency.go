@@ -13,6 +13,11 @@ var currencySymbols = map[string]string{"EUR": "€", "GBP": "£", "INR": "₹",
 func currencyInText(text string) string {
 	found := map[string]bool{}
 	for _, code := range currencyCodes {
+		if regexp.MustCompile(`(?im)(?:all prices|prices|currency)\s+(?:are\s+)?(?:in\s+)?` + code + `\b`).MatchString(text) {
+			found[code] = true
+		}
+	}
+	for _, code := range currencyCodes {
 		if regexp.MustCompile(`(?i)(?:\b` + code + `\s*[0-9]|[0-9](?:[.,][0-9]{1,2})?\s*` + code + `\b)`).MatchString(text) {
 			found[code] = true
 		}
@@ -55,5 +60,5 @@ func containsMeat(quote string) bool {
 			return false
 		}
 	}
-	return regexp.MustCompile(`(?i)\b(bacon|chicken|beef|pork|ham|salmon|tuna|shrimp|prawns|lamb|duck|turkey|sausage|fish|poulet|jambon|saumon|boeuf|porc|pollo|jamón|salmón)\b`).MatchString(q)
+	return regexp.MustCompile(`(?i)\b(bacon|chicken|beef|pork|ham|salmon|tuna|shrimp|prawns|lamb|duck|turkey|sausage|fish|seafood|mackerel|sardine|sardines|eel|cod|herring|saba|poulet|jambon|saumon|boeuf|porc|pollo|jamón|salmón)\b`).MatchString(q)
 }

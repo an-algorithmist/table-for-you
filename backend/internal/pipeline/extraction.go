@@ -3,13 +3,14 @@ package pipeline
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"table-for-you/backend/internal/domain"
 	"table-for-you/backend/internal/llm"
 	"table-for-you/backend/internal/storage/postgres"
 )
 
-const extractionVersion = "menu-review-v12-source-prices"
+const extractionVersion = "menu-review-v14-bm25-prices"
 
 func (j *job) extract(req domain.Requirements, candidates []domain.Candidate) (domain.Extraction, error) {
 	aggregate := domain.Extraction{Restaurants: []domain.Restaurant{}}
@@ -43,6 +44,8 @@ func (j *job) extractCandidate(req domain.Requirements, candidate domain.Candida
 		return v, nil
 	}
 	var raw domain.Extraction
+	start := time.Now()
+	defer j.duration("model_extraction", start)
 	instruction, err := llm.Prompt("menu_extract")
 	if err != nil {
 		return raw, err
@@ -50,7 +53,11 @@ func (j *job) extractCandidate(req domain.Requirements, candidate domain.Candida
 	_ = j.event("menu.extracting", "Extracting and translating menu/review evidence for "+candidate.Name)
 	sourceInput := []map[string]any{}
 	for _, d := range documents {
-		sourceInput = append(sourceInput, map[string]any{"source_id": sourceAlias(d), "url": d.URL, "kind": d.Kind, "snippet": d.Snippet, "method": d.Method, "text": RelevantText(d.Text, d.Kind, candidate.Name), "title": d.Title})
+		selected := RelevantText(d.Text, d.Kind, candidate.Name+" "+req.Meal+" "+req.Currency+" "+j.passageQuery)
+		if d.Kind == "menu" && menuPrice.MatchString(d.Text) && !menuPrice.MatchString(selected) {
+			_ = j.event("price.selection_gap", "Price-bearing rows omitted during passage selection: "+d.URL)
+		}
+		sourceInput = append(sourceInput, map[string]any{"source_id": sourceAlias(d), "url": d.URL, "kind": d.Kind, "snippet": d.Snippet, "method": d.Method, "text": selected, "title": d.Title})
 	}
 	e := j.generate(instruction, marshal(map[string]any{"requirements": keyReq, "candidates": []domain.Candidate{candidate}, "sources": sourceInput}), domain.Extraction{}, &raw)
 	if e != nil {

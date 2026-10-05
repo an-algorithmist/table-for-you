@@ -26,11 +26,7 @@ func nextResearchGap(req domain.Requirements, result domain.Result, candidates [
 		if r != nil {
 			for _, d := range r.Dishes {
 				missingPrice = missingPrice || d.Price == "" || d.Currency == ""
-				for _, check := range d.Constraints {
-					if check.Name == "menu completeness" {
-						missingPrice = true
-					}
-				}
+
 				for _, check := range d.Constraints {
 					if (check.Name == req.Diet || containsRequirement(req.Excluded, check.Name)) && check.Status != "supported" {
 						missingDiet = true
@@ -39,7 +35,7 @@ func nextResearchGap(req domain.Requirements, result domain.Result, candidates [
 			}
 		}
 		if missingPrice || missingDiet {
-			focus := "menu dish prices currency"
+			focus := "menu prices " + req.Currency
 			if missingDiet {
 				focus += " " + req.Diet + " ingredients " + strings.Join(req.Excluded, " ")
 			}

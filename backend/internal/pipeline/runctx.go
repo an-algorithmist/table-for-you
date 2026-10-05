@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"table-for-you/backend/internal/domain"
 	"table-for-you/backend/internal/llm"
@@ -20,10 +21,18 @@ type job struct {
 	limitations     []string
 	docCandidates   map[string]map[string]bool
 	activeCandidate string
+	passageQuery    string
 	attemptedURLs   map[string]bool
 	requirements    domain.Requirements
 	visionReads     int
 	visualAttempts  map[string]bool
+}
+
+func (j *job) duration(stage string, start time.Time) {
+	if j.use.StageMilliseconds == nil {
+		j.use.StageMilliseconds = map[string]int64{}
+	}
+	j.use.StageMilliseconds[stage] += time.Since(start).Milliseconds()
 }
 
 func (j *job) event(kind, message string) error {
@@ -36,6 +45,8 @@ func (j *job) event(kind, message string) error {
 }
 
 func (j *job) generate(instruction, input string, shape, out any) error {
+	start := time.Now()
+	defer j.duration("model_plain", start)
 	preamble, err := llm.Prompt("untrusted")
 	if err != nil {
 		return err

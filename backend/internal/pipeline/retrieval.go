@@ -13,7 +13,13 @@ import (
 )
 
 func (j *job) search(query string, limit int) ([]domain.SearchHit, error) {
-	key := postgres.Hash("tavily-branch-menu-v2|" + strings.Join(strings.Fields(query), " ") + fmt.Sprint("|", limit))
+	return j.searchPurpose(query, limit, "discovery")
+}
+
+func (j *job) searchPurpose(query string, limit int, purpose string) ([]domain.SearchHit, error) {
+	start := time.Now()
+	defer j.duration("search_"+purpose, start)
+	key := postgres.Hash("tavily-purpose-v3|" + purpose + "|" + strings.Join(strings.Fields(query), " ") + fmt.Sprint("|", limit))
 	if !j.refresh {
 		hits, ok, e := j.e.Store.Search(j.ctx, j.owner, key)
 		if e != nil {
@@ -30,7 +36,13 @@ func (j *job) search(query string, limit int) ([]domain.SearchHit, error) {
 	}
 	j.use.Searches++
 	_ = j.event("search.started", query)
-	hits, e := j.e.Search.Search(j.ctx, query, limit)
+	var hits []domain.SearchHit
+	var e error
+	if provider, ok := j.e.Search.(PurposeSearch); ok {
+		hits, e = provider.SearchPurpose(j.ctx, query, purpose, limit)
+	} else {
+		hits, e = j.e.Search.Search(j.ctx, query, limit)
+	}
 	if e != nil {
 		return nil, e
 	}
@@ -49,7 +61,7 @@ func (j *job) snippet(h domain.SearchHit, kind string) {
 		return
 	}
 	for _, d := range j.docs {
-		if d.URL == h.URL && d.Snippet {
+		if d.URL == h.URL && d.Snippet && d.Hash == postgres.Hash(h.Content) {
 			j.tag(d.ID)
 			return
 		}
@@ -85,7 +97,7 @@ func (j *job) fetch(urls []string, kind string) error {
 		if already {
 			continue
 		}
-		key := postgres.Hash("tavily-markdown-advanced-v4-menu|" + kind + "|" + u)
+		key := postgres.Hash("tavily-markdown-advanced-v5-menu|" + kind + "|" + u)
 		if !j.refresh {
 			d, ok, e := j.e.Store.Document(j.ctx, key)
 			if e != nil {
@@ -116,7 +128,17 @@ func (j *job) fetch(urls []string, kind string) error {
 	}
 	j.use.Fetches += len(miss)
 	_ = j.event("source.fetching", fmt.Sprintf("Reading %d %s sources.", len(miss), kind))
-	out, e := j.e.Search.Extract(j.ctx, miss)
+	startFetch := time.Now()
+	j.use.ExtractRequests++
+	var out map[string]string
+	var failures map[string]string
+	var e error
+	if provider, ok := j.e.Search.(DetailedExtractor); ok {
+		out, failures, e = provider.ExtractDetailed(j.ctx, miss)
+	} else {
+		out, e = j.e.Search.Extract(j.ctx, miss)
+	}
+	j.duration("extract_http", startFetch)
 	if e != nil {
 		return e
 	}
@@ -126,7 +148,11 @@ func (j *job) fetch(urls []string, kind string) error {
 			if kind == "menu" && j.readVisualMenu(u) == nil {
 				continue
 			}
-			j.limitations = append(j.limitations, "Could not extract source: "+u)
+			reason := failures[u]
+			if reason == "" {
+				reason = "extractor returned no source text"
+			}
+			j.limitations = append(j.limitations, "Source unavailable: "+u+" — "+reason)
 			continue
 		}
 		if len(text) > 60000 {
@@ -135,7 +161,7 @@ func (j *job) fetch(urls []string, kind string) error {
 		}
 		now := time.Now().UTC()
 		d := domain.Document{ID: uuid.NewString(), URL: u, Title: u, Text: text, Kind: kind, Historical: historicalURL(u), FetchedAt: now, ExpiresAt: now.Add(postgres.DocTTL(kind)), Hash: postgres.Hash(text)}
-		key := postgres.Hash("tavily-markdown-advanced-v4-menu|" + kind + "|" + u)
+		key := postgres.Hash("tavily-markdown-advanced-v5-menu|" + kind + "|" + u)
 		if e = j.e.Store.PutDocument(j.ctx, key, d); e != nil {
 			return e
 		}

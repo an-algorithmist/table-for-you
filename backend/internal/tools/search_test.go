@@ -30,8 +30,8 @@ func TestTavilyAuthenticationAndIncompleteExtraction(t *testing.T) {
 	if e != nil || len(hits) != 1 {
 		t.Fatal("search filtering failed")
 	}
-	docs, e := p.Extract(context.Background(), []string{"https://restaurant.example/menu"})
-	if e != nil || len(docs) != 0 {
+	docs, failures, e := p.ExtractDetailed(context.Background(), []string{"https://restaurant.example/menu"})
+	if e != nil || len(docs) != 0 || failures["https://restaurant.example/menu"] != "blocked" {
 		t.Fatal("failed extraction must not become a fabricated source")
 	}
 }
@@ -54,7 +54,7 @@ func TestOfficialMenuSearchUsesFocusedRetrieval(t *testing.T) {
 	defer server.Close()
 	p := &Tavily{"test-key", server.Client(), server.URL}
 	for _, q := range []string{"Kitchen Barcelona official menu lunch prices", "Kitchen Barcelona negative reviews"} {
-		if _, err := p.Search(context.Background(), q, 5); err != nil {
+		if _, err := p.SearchPurpose(context.Background(), q, map[bool]string{true: "menu", false: "review"}[strings.Contains(q, "official menu")], 5); err != nil {
 			t.Fatal(err)
 		}
 	}

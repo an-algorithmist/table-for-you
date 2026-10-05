@@ -67,6 +67,21 @@ func (j *job) validate(req domain.Requirements, raw domain.Extraction) domain.Re
 			cite(&r.Reviews[k].Evidence)
 		}
 		v := evidence.Validate(req, domain.Extraction{Restaurants: []domain.Restaurant{*r}}, branchDocs, time.Now())
+		for _, list := range [][]domain.Restaurant{v.Confirmed, v.Alternatives, v.Excluded} {
+			for _, checked := range list {
+				for _, d := range checked.Dishes {
+					if d.Price == "" {
+						reason := "extraction missing item price"
+						for _, prior := range r.Dishes {
+							if prior.Name == d.Name && prior.Price != "" {
+								reason = "validation rejected item amount or citation"
+							}
+						}
+						_ = j.event("price.gap", checked.Name+" / "+d.Name+": "+reason)
+					}
+				}
+			}
+		}
 		result.Confirmed = append(result.Confirmed, v.Confirmed...)
 		result.Alternatives = append(result.Alternatives, v.Alternatives...)
 		result.Excluded = append(result.Excluded, v.Excluded...)

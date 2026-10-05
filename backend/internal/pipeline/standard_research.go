@@ -39,7 +39,7 @@ func (j *job) standardResearch(req domain.Requirements, text, query string) (*do
 		attempted[plan.Candidate] = true
 		j.activeCandidate = plan.Candidate
 		_ = j.event("research.followup", plan.Reason)
-		extra, er := j.search(plan.Query, 4)
+		extra, er := j.searchPurpose(plan.Query, 4, map[string]string{"menu": "price", "review": "review"}[plan.Kind])
 		if er != nil {
 			j.limitations = append(j.limitations, "Targeted follow-up failed for "+plan.Candidate)
 			continue
@@ -59,6 +59,9 @@ func (j *job) standardResearch(req domain.Requirements, text, query string) (*do
 			}
 		}
 		_ = j.fetch(urls, plan.Kind)
+		if plan.Kind == "menu" {
+			_ = j.followMenuLinks(before)
+		}
 		if len(j.docs) <= before {
 			continue
 		}
@@ -66,7 +69,9 @@ func (j *job) standardResearch(req domain.Requirements, text, query string) (*do
 			if c.Name != plan.Candidate {
 				continue
 			}
+			j.passageQuery = plan.Query
 			updated, extractErr := j.extractCandidate(req, c)
+			j.passageQuery = ""
 			if extractErr != nil {
 				j.limitations = append(j.limitations, "Follow-up extraction did not finish for "+c.Name)
 				break

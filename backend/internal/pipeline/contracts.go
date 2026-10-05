@@ -29,3 +29,13 @@ type Search interface {
 type MenuReader interface {
 	ReadMenu(context.Context, string) (string, domain.Usage, error)
 }
+
+// PurposeSearch separates query intent from its text.
+type PurposeSearch interface {
+	SearchPurpose(context.Context, string, string, int) ([]domain.SearchHit, error)
+}
+
+// DetailedExtractor exposes individual failures without discarding successful documents.
+type DetailedExtractor interface {
+	ExtractDetailed(context.Context, []string) (map[string]string, map[string]string, error)
+}

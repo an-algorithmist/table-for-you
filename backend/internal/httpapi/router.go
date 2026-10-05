@@ -42,6 +42,7 @@ func New(store *postgres.Store, engine ResearchEngine, cfg config.Config) http.H
 	mux.Handle("POST /api/conversations", server.protect(http.HandlerFunc(server.create)))
 	mux.Handle("GET /api/conversations", server.protect(http.HandlerFunc(server.list)))
 	mux.Handle("GET /api/conversations/{id}", server.protect(http.HandlerFunc(server.conversation)))
+	mux.Handle("GET /api/conversations/{id}/runs", server.protect(http.HandlerFunc(server.runHistory)))
 	mux.Handle("DELETE /api/conversations/{id}", server.protect(http.HandlerFunc(server.delete)))
 	mux.Handle("POST /api/conversations/{id}/messages", server.protect(http.HandlerFunc(server.message)))
 	mux.Handle("POST /api/conversations/{id}/refresh", server.protect(http.HandlerFunc(server.message)))

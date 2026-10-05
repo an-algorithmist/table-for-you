@@ -59,17 +59,19 @@ type Run struct {
 
 // Usage records attempted tool calls and provider-reported token counts; UsageKnown distinguishes missing metadata.
 type Usage struct {
-	Mode            string `json:"research_mode,omitempty"`
-	GroundedModel   string `json:"grounded_model,omitempty"`
-	ThinkingTokens  int64  `json:"thinking_tokens,omitempty"`
-	ToolInputTokens int64  `json:"tool_input_tokens,omitempty"`
-	Searches        int    `json:"searches"`
-	Fetches         int    `json:"fetches"`
-	ModelCalls      int    `json:"model_calls"`
-	CacheHits       int    `json:"cache_hits"`
-	InputTokens     int64  `json:"input_tokens"`
-	OutputTokens    int64  `json:"output_tokens"`
-	UsageKnown      bool   `json:"usage_known"`
+	Mode              string           `json:"research_mode,omitempty"`
+	GroundedModel     string           `json:"grounded_model,omitempty"`
+	ThinkingTokens    int64            `json:"thinking_tokens,omitempty"`
+	ToolInputTokens   int64            `json:"tool_input_tokens,omitempty"`
+	Searches          int              `json:"searches"`
+	ExtractRequests   int              `json:"extract_requests,omitempty"`
+	StageMilliseconds map[string]int64 `json:"stage_ms,omitempty"`
+	Fetches           int              `json:"fetches"`
+	ModelCalls        int              `json:"model_calls"`
+	CacheHits         int              `json:"cache_hits"`
+	InputTokens       int64            `json:"input_tokens"`
+	OutputTokens      int64            `json:"output_tokens"`
+	UsageKnown        bool             `json:"usage_known"`
 }
 
 // Event is a persisted SSE trace entry; Sequence supports reconnect replay.

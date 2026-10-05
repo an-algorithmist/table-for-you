@@ -52,7 +52,7 @@ func TestGroundedRouteBypassesTavilyAndNeverRetries(t *testing.T) {
 					t.Fatal(err)
 				}
 				if got.Status != "running" {
-					if ground.calls != 1 || search.searches != 0 || search.fetches != 0 || got.Usage.ModelCalls != 2 || got.Usage.Mode != "google_grounded" {
+					if ground.calls != 1 || search.searches != 0 || search.fetches != 0 || got.Usage.ModelCalls != map[bool]int{true: 2, false: 3}[failure] || got.Usage.Mode != "google_grounded" {
 						t.Fatalf("wrong route or retries: %+v", got)
 					}
 					if failure {
@@ -68,5 +68,34 @@ func TestGroundedRouteBypassesTavilyAndNeverRetries(t *testing.T) {
 			}
 			t.Fatal("timeout")
 		})
+	}
+}
+
+type failingFormatter struct{ calls int }
+
+func (m *failingFormatter) Name() string { return "failing-formatter" }
+func (m *failingFormatter) Generate(context.Context, string, string, any, any) (domain.Usage, error) {
+	m.calls++
+	return domain.Usage{ModelCalls: 1}, errors.New("malformed structured response")
+}
+func TestFormatterFailureDoesNotRepeatGroundingOrDiscardAnswer(t *testing.T) {
+	s := testutil.Database(t)
+	ctx := context.Background()
+	token, _ := s.NewSession(ctx)
+	owner, _ := s.Owner(ctx, token)
+	chat, _ := s.CreateConversation(ctx, owner)
+	run, _, err := s.Accept(ctx, owner, chat.ID, uuid.NewString(), "Lunch", 0, false, time.Minute, 20, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := &failingFormatter{}
+	ground := &controlledGround{}
+	e := New(ctx, s, model, &controlledSearch{}, config.Config{MaxModelCalls: 9})
+	e.Grounded = ground
+	j := job{ctx: ctx, e: e, run: run}
+	g := &domain.Grounding{Text: "Original paid answer", Sources: []domain.GroundingSource{{Number: 1, URL: "https://kitchen.example/menu"}}}
+	j.formatGrounded(g)
+	if model.calls != 1 || ground.calls != 0 || g.Text != "Original paid answer" || len(g.Sources) != 1 || g.FormattingError == "" {
+		t.Fatal("paid result lost or request repeated")
 	}
 }

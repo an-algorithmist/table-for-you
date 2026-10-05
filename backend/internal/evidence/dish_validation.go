@@ -15,6 +15,12 @@ func validateDishes(req domain.Requirements, r domain.Restaurant, docs []domain.
 		if !Supported(d.Evidence, byID) || d.Name == "" || !strings.Contains(normalize(d.Evidence.Quote), normalize(d.Name)) {
 			continue
 		}
+		if req.Meal == "dinner" && breakfastOnly(d.Evidence.Quote) {
+			d.Status = "contradicted"
+			d.Constraints = []domain.Constraint{{Name: "meal availability", Status: "contradicted", Evidence: d.Evidence, Reason: "This dish passage specifies a breakfast-only or morning-only offer."}}
+			rejected = append(rejected, d)
+			continue
+		}
 		state := "supported"
 		mealEvidence := domain.Citation{}
 		for _, constraint := range d.Constraints {
@@ -178,4 +184,9 @@ func validateDishes(req domain.Requirements, r domain.Restaurant, docs []domain.
 		}
 	}
 	return confirmed, unknown, rejected
+}
+
+func breakfastOnly(text string) bool {
+	q := strings.ToLower(text)
+	return strings.Contains(q, "breakfast only") || strings.Contains(q, "morning only") || strings.Contains(q, "until 11am") || strings.Contains(q, "until 11 am") || strings.Contains(q, "before 11am")
 }

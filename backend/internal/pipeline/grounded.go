@@ -26,7 +26,9 @@ func (j *job) groundedResearch(req domain.Requirements, message string) (*domain
 	if j.use.ModelCalls >= j.modelCallLimit() {
 		return nil, errors.New("model call budget exhausted")
 	}
+	groundStart := time.Now()
 	ground, use, err := j.e.Grounded.Ground(j.ctx, instruction, marshal(map[string]any{"requirements": req, "new_message": message}), j.e.Config.GroundedMaxOutput)
+	j.duration("grounded_provider", groundStart)
 	j.use.ModelCalls += max(1, use.ModelCalls)
 	j.use.Searches += use.Searches
 	j.use.Fetches += use.Fetches
@@ -45,6 +47,7 @@ func (j *job) groundedResearch(req domain.Requirements, message string) (*domain
 	for _, u := range ground.URLs {
 		_ = j.event("grounded.url", u.Status+": "+u.URL)
 	}
+	j.formatGrounded(ground)
 	_ = j.event("grounded.completed", fmt.Sprintf("Returned %d source references and %d observed search queries. Grounding citations are provider attribution, not independent menu extraction.", len(ground.Sources), len(ground.Queries)))
 	return &domain.Result{ValidationVersion: "google-grounded-v1", Requirements: req, Grounding: ground, Answer: ground.Text, Confirmed: []domain.Restaurant{}, Alternatives: []domain.Restaurant{}, Excluded: []domain.Restaurant{}, Sources: []domain.Document{}, ResearchedAt: time.Now().UTC(), Limitations: []string{"Google-grounded answer with provider source attribution; not independently validated by the standard menu extraction pipeline."}}, nil
 }

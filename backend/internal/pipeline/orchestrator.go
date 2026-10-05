@@ -15,6 +15,7 @@ import (
 
 func (e *Engine) execute(ctx context.Context, cancel context.CancelFunc, owner string, r domain.Run, text string, refresh bool) {
 	// One context budget protects every real model adapter, including visual and grounded calls.
+	runStart := time.Now()
 	ctx = llm.WithBudget(ctx, e.Config.MaxModelCalls)
 	j := &job{use: domain.Usage{Mode: r.Usage.Mode}, e: e, ctx: ctx, owner: owner, run: r, refresh: refresh, docCandidates: map[string]map[string]bool{}}
 	stopHeartbeat := make(chan struct{})
@@ -57,6 +58,7 @@ func (e *Engine) execute(ctx context.Context, cancel context.CancelFunc, owner s
 				result.Limitations = append(result.Limitations, message)
 			}
 		}
+		j.duration("total", runStart)
 		if result != nil {
 			result.Usage = j.use
 		}

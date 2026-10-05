@@ -17,7 +17,7 @@ Example request:
 - **Review context:** searches positive, negative and preference-specific review passages, then paraphrases supported observations. Missing negative evidence is reported rather than invented.
 - **Visible research trail:** Server-Sent Events (SSE) expose research stages, source retrieval, cache reuse and failures. These are execution events, not private model reasoning.
 - **Price transparency:** shows source-listed prices with ISO currency where established. If an exact price cannot be extracted, the UI shows a supported per-person planning estimate when available, or **Price unavailable**. Estimates do not become exact prices for unpriced dishes.
-- **Persistent chat and caching:** PostgreSQL stores browser-scoped conversations, research results, source snapshots and caches. Follow-up explanations can reuse saved evidence without new web searches.
+- **Persistent chat and caching:** PostgreSQL stores browser-scoped conversations, research results, source snapshots and caches. Previous research stays accessible in collapsible sections, with owner-scoped pagination and separate source/trail maps for each run. Follow-up explanations can reuse saved evidence without new web searches.
 - **Free-tier-compatible standard mode:** the default Gemini Flash-Lite + Tavily route can operate within their available free allowances, without Google Search grounding. Free usage depends on provider eligibility, account billing configuration, rate limits and remaining credits; the application does not enforce free-tier billing. Google lists free-tier input/output for Gemini 3.1 Flash-Lite, and Tavily provides a monthly free-credit allowance. See [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing) and [Tavily credits](https://docs.tavily.com/documentation/api-credits).
 - **Optional Google-grounded mode:** a composer toggle enables Gemini with Google Search grounding and URL context after an explicit cost warning. This provides an alternative retrieval path that may improve source coverage and answer completeness. Results depend on the available sources. Grounded requests can incur model/search charges; no automatic paid retry or fallback is performed.
 - **Bounded research:** request deadlines, call caps, daily admission quotas and cancellation constrain work. Provider credentials stay on the backend.
@@ -63,6 +63,7 @@ table-for-you/
     ├── embed.go                   # assets embedded into the backend binary
     └── assets/
         ├── index.html
+        ├── markdown.js               # shared safe Markdown rendering
         ├── app.js
         └── styles.css
 ```
@@ -87,7 +88,8 @@ flowchart TD
     subgraph STANDARD[Standard web RAG pipeline]
         DISC[Tavily discovery search] --> SHORT[Shortlist up to 3 restaurant branches]
         SHORT --> FETCH[Retrieve menus, prices and contextual reviews]
-        FETCH --> EXTRACT[Gemini: structured extraction and English translation]
+        FETCH --> IR[URL reranking and BM25 menu passages]
+        IR --> EXTRACT[Gemini: structured extraction and English translation]
         EXTRACT --> CHECK[Validate citations, branch, diet, meal and price]
         CHECK --> GAPS{Consequential evidence gaps and budget remaining?}
         GAPS -->|Yes: at most 2 rounds| TARGET[Targeted search and extraction]
@@ -99,7 +101,8 @@ flowchart TD
     MODE -->|Explicit cost acknowledgement| GROUND[Gemini with Google Search and URL context]
     GROUND --> ATTR[Grounded prose, provider citations and search metadata]
     CARDS --> STORE[Persist result, usage and source evidence]
-    ATTR --> STORE
+    ATTR --> FORMAT[One plain formatting attempt: attributed shortlist]
+    FORMAT --> STORE
     ANSWER --> STORE
     STORE --> UI
 
@@ -118,17 +121,17 @@ flowchart TD
 
 1. **Interpret:** combine the new message with bounded conversation context, preserve explicit restrictions and identify whether research, clarification or an existing-result explanation is needed.
 2. **Discover and shortlist:** search for relevant restaurants, retain names supported by discovery passages, deduplicate candidates and check available links.
-3. **Retrieve:** research each branch sequentially. Prefer official menus, follow relevant linked menus, search specifically for missing prices, and collect positive/negative/context-specific review evidence. Third-party menu text or snippets can provide partial evidence when full extraction is unavailable.
+3. **Retrieve and rank:** research each branch sequentially, with explicit discovery, menu, price and review purposes. Rank URLs by restaurant identity, location, official domain and menu/price signals; use BM25-ranked literal menu passages with adjacent rows and descriptions. Prefer official menus, follow relevant linked menus, search specifically for missing prices, and collect positive/negative/context-specific review evidence. Third-party menu text or snippets can provide partial evidence when full extraction is unavailable.
 4. **Extract and translate:** pass restaurant-scoped source text to Gemini using a structured response schema. Extract dishes, descriptions, amounts, currency, venue labels and short review summaries with exact supporting citations.
 5. **Validate:** check that cited passages exist, evidence belongs to the restaurant branch, dietary/meal requirements are supported, and amounts/currency have an acceptable source basis. Compare supported dish prices against a same-currency per-dish budget.
-6. **Repair gaps:** make bounded targeted searches for missing prices, ingredients or review criticism, then extract and validate again while call/time budgets allow.
+6. **Repair gaps:** target missing prices on selected dishes, ingredients or review criticism, then extract and validate again while call/time budgets allow.
 7. **Recommend and persist:** return source-supported choices and possible options with consequential gaps. Strictly unsuitable or unverified restricted dishes are kept out of the shortlist. Save results, usage and trace events for history and follow-ups.
 
 ### Google-grounded route
 
-Interpretation, clarification, ownership and admission are shared with standard mode. When enabled for research, the backend makes one grounded provider request with Google Search and URL context; Google controls search fan-out inside that request. The UI displays grounded prose, citations, Search Suggestions and observed research metadata.
+Interpretation, clarification, ownership and admission are shared with standard mode. When enabled for research, the backend makes one grounded provider request with Google Search and URL context; Google controls search fan-out inside that request. One plain, non-grounded model attempt formats the answer into up to four restaurant cards with three dishes each. Literal answer passages and provider source references are checked for consistency; formatting never repeats the paid search. The UI retains the original answer, citations and Google Search Suggestions if formatting fails.
 
-**Grounded prose is provider-attributed output, not a result independently validated by the standard menu-extraction pipeline.** The restaurant/dish counts and query target in its prompt are instructions, not enforced response limits. Google documents that a single grounded request can produce multiple search queries. Consult [Google Search grounding documentation](https://ai.google.dev/gemini-api/docs/google-search/) and [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing) for availability and billing.
+**Grounded prose is provider-attributed output, not a result independently validated by the standard menu-extraction pipeline.** Structured cards enforce four restaurants and three dishes per restaurant; the query target in the research prompt is an instruction, not an enforced provider search limit. Google documents that a single grounded request can produce multiple search queries. Consult [Google Search grounding documentation](https://ai.google.dev/gemini-api/docs/google-search/) and [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing) for availability and billing.
 
 ## Tools and technologies
 
