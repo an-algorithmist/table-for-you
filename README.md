@@ -8,6 +8,10 @@ Example request:
 
 > Find vegetarian lunch in Barcelona, Spain, under EUR 25 per dish. Show recommended dishes, brief descriptions, prices, restaurant links and menu links.
 
+## Demo
+
+[Watch the Table for You demo on Loom](https://www.loom.com/share/5b727f38884f4001a47f0dcb877b85d4).
+
 ## Notable features
 
 - **Conversational requirements:** accepts a city, meal, dietary preference, ingredient exclusions, food preferences such as chicken, cuisine, area and optional budget. Asks for missing or consequentially ambiguous information before restaurant research.
